@@ -1,0 +1,676 @@
+<title>Baromètre de Confiance</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+  :root{
+    --bg:#F7F4F7;
+    --surface:#FFFFFF;
+    --surface-2:#F1E9EF;
+    --ink:#241C29;
+    --ink-soft:#6E6476;
+    --ink-faint:#9A8FA0;
+    --line:#E4DAE2;
+    --accent:#8E2283;
+    --accent-hover:#71186A;
+    --accent-soft:#F4E4F1;
+    --good:#0F6B54;
+    --good-soft:#E1F3EC;
+    --bad:#A6297E;
+    --bad-soft:#F6E5F0;
+    --shadow:0 1px 2px rgba(36,28,41,.06), 0 10px 28px -14px rgba(36,28,41,.28);
+    --radius-l:20px;
+    --radius-m:14px;
+    --radius-s:9px;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#18131C;
+      --surface:#211A26;
+      --surface-2:#2B2130;
+      --ink:#F1EAF0;
+      --ink-soft:#B9AEC0;
+      --ink-faint:#8A7D91;
+      --line:#3B2E3F;
+      --accent:#E08FD4;
+      --accent-hover:#F0B3E4;
+      --accent-soft:#3A2438;
+      --good:#59D9B4;
+      --good-soft:#1C3A32;
+      --bad:#EC9BCF;
+      --bad-soft:#3A2333;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#18131C;
+    --surface:#211A26;
+    --surface-2:#2B2130;
+    --ink:#F1EAF0;
+    --ink-soft:#B9AEC0;
+    --ink-faint:#8A7D91;
+    --line:#3B2E3F;
+    --accent:#E08FD4;
+    --accent-hover:#F0B3E4;
+    --accent-soft:#3A2438;
+    --good:#59D9B4;
+    --good-soft:#1C3A32;
+    --bad:#EC9BCF;
+    --bad-soft:#3A2333;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Sora', 'Source Sans 3', system-ui, sans-serif;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    text-wrap:balance;
+    margin:0;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center;
+    font-size:0.72rem;
+    font-weight:700;
+    letter-spacing:0.09em;
+    text-transform:uppercase;
+    color:var(--accent);
+  }
+  button{font-family:inherit;}
+  ::selection{background:var(--accent); color:#fff;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.01ms !important; transition-duration:.01ms !important;} }
+
+  .wrap{max-width:920px; margin:0 auto; padding:0 20px 80px;}
+
+  /* ---------- Header / barometer ---------- */
+  header.top{
+    position:sticky; top:0; z-index:20;
+    background:var(--bg);
+    border-bottom:1px solid var(--line);
+    padding:14px 20px;
+  }
+  .top-inner{
+    max-width:920px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .top-id{display:flex; flex-direction:column; gap:2px;}
+  .top-id .title{font-size:1.05rem; font-weight:700; font-family:'Sora',sans-serif;}
+  .score-pill{
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:999px; padding:6px 14px;
+    font-weight:700; font-variant-numeric:tabular-nums;
+    font-size:0.9rem; box-shadow:var(--shadow);
+  }
+  .score-pill .dot{width:8px; height:8px; border-radius:50%; background:var(--accent);}
+
+  .barometer{
+    max-width:920px; margin:12px auto 0; display:flex; gap:10px;
+  }
+  .baro-seg{flex:1; display:flex; flex-direction:column; gap:6px; align-items:center;}
+  .baro-seg .bar{
+    width:100%; height:4px; border-radius:3px; background:var(--line); overflow:hidden;
+  }
+  .baro-seg .bar i{
+    display:block; height:100%; width:0%;
+    background:var(--accent);
+    transition:width .3s ease;
+  }
+  .baro-seg .lbl{font-size:13px; opacity:.5; filter:grayscale(1); transition:opacity .2s ease, filter .2s ease;}
+  .baro-seg.done .bar i, .baro-seg.current .bar i{width:100%;}
+  .baro-seg.done .lbl, .baro-seg.current .lbl{opacity:1; filter:none;}
+  @media (prefers-reduced-motion: reduce){ .baro-seg .bar i{transition:none;} }
+
+  main{padding-top:28px;}
+
+  /* ---------- Intro screen ---------- */
+  .intro{
+    display:flex; flex-direction:column; gap:22px; padding:16px 0 8px;
+  }
+  .intro h1{font-size:clamp(1.6rem, 4vw, 2.3rem); line-height:1.15; font-weight:800;}
+  .intro h1 em{color:var(--accent); font-style:italic;}
+  .intro p.lede{
+    font-size:1.05rem; color:var(--ink-soft); max-width:60ch;
+  }
+  .rules{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:10px; margin-top:6px;
+  }
+  .rule-card{
+    display:flex; align-items:flex-start; gap:12px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius-m); padding:14px 16px; box-shadow:var(--shadow);
+  }
+  .rule-card .num{
+    flex-shrink:0; width:28px; height:28px; border-radius:50%;
+    background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Sora',sans-serif; font-weight:700; font-size:0.78rem;
+  }
+  .rule-card p{margin:3px 0 0; font-size:0.92rem; color:var(--ink-soft);}
+  .cta{
+    align-self:flex-start;
+    background:var(--accent); color:#fff;
+    border:none; border-radius:999px;
+    padding:14px 28px; font-size:1.02rem; font-weight:700;
+    cursor:pointer; box-shadow:0 6px 18px -8px var(--accent);
+    transition:transform .12s ease, background .12s ease;
+  }
+  .cta:hover{background:var(--accent-hover); transform:translateY(-1px);}
+  .cta:active{transform:translateY(0);}
+
+  /* ---------- Round stage ---------- */
+  .stage{display:none; flex-direction:column; gap:22px;}
+  .stage.active{display:flex;}
+
+  .round-head{
+    display:flex; align-items:flex-start; gap:14px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius-l); padding:18px 20px; box-shadow:var(--shadow);
+  }
+  .round-icon{
+    flex-shrink:0; width:44px; height:44px; border-radius:50%;
+    background:var(--accent-soft); font-size:1.35rem; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .round-head .rn{font-size:0.78rem; font-weight:700; color:var(--ink-faint); letter-spacing:.06em; text-transform:uppercase;}
+  .round-head h2{font-size:1.25rem; margin-top:2px;}
+  .round-head .framing{margin-top:6px; color:var(--ink-soft); font-size:0.95rem;}
+  .badge-critical{
+    display:inline-block; margin-top:8px; font-size:0.72rem; font-weight:700;
+    background:var(--bad-soft); color:var(--bad); padding:4px 11px; border-radius:999px;
+    letter-spacing:.03em;
+  }
+
+  .phase-label{
+    display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:700;
+    color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;
+  }
+  .phase-label .n{
+    width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:0.78rem;
+  }
+  .match-progress{font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums;}
+
+  .match-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){ .match-grid{grid-template-columns:1fr;} }
+  .match-col h3{font-size:0.8rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); margin-bottom:8px; font-family:'Source Sans 3',sans-serif; font-weight:700;}
+  .match-col{display:flex; flex-direction:column; gap:10px;}
+
+  .card-btn{
+    text-align:left; width:100%;
+    background:var(--surface); border:1.5px solid var(--line);
+    border-radius:var(--radius-m); padding:13px 14px; font-size:0.93rem; color:var(--ink);
+    cursor:pointer; box-shadow:var(--shadow);
+    transition:border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .card-btn:hover:not(:disabled){border-color:var(--accent);}
+  .card-btn:active:not(:disabled){transform:scale(0.99);}
+  .card-btn.selected{border-color:var(--accent); background:var(--accent-soft);}
+  .card-btn.matched{border-color:var(--good); background:transparent; opacity:0.55; cursor:default;}
+  .card-btn.matched::after{content:" ✓"; color:var(--good); font-weight:700;}
+  .card-btn.wrong{border-color:var(--bad); background:var(--bad-soft);}
+  .card-btn:disabled{cursor:default;}
+
+  .qcm{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-l);
+    padding:20px; box-shadow:var(--shadow);
+    display:none; flex-direction:column; gap:14px;
+  }
+  .qcm.unlocked{display:flex;}
+  .qcm h3{font-size:1.05rem; font-family:'Sora',sans-serif; font-weight:600;}
+  .qcm .opt{
+    text-align:left; width:100%;
+    background:var(--surface-2); border:1.5px solid var(--line); border-radius:var(--radius-m);
+    padding:12px 15px; font-size:0.92rem; cursor:pointer; color:var(--ink);
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .qcm .opt:hover:not(:disabled){border-color:var(--accent); background:var(--accent-soft);}
+  .qcm .opt.correct{border-color:var(--good); background:var(--good-soft); font-weight:600;}
+  .qcm .opt.incorrect{border-color:var(--bad); background:var(--bad-soft);}
+  .qcm .opt:disabled{cursor:default;}
+  .feedback{
+    font-size:0.9rem; padding:12px 14px; border-radius:var(--radius-m); display:none;
+    border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .feedback.show{display:block;}
+  .feedback.good{background:var(--good-soft); border-color:var(--good);}
+  .feedback.bad{background:var(--bad-soft); border-color:var(--bad);}
+  .next-btn{
+    align-self:flex-end; display:none;
+    background:var(--accent); color:#fff; border:none; border-radius:999px;
+    padding:11px 22px; font-weight:700; cursor:pointer;
+    transition:background .12s ease;
+  }
+  .next-btn:hover{background:var(--accent-hover);}
+  .next-btn.show{display:inline-block;}
+
+  /* ---------- Final recap ---------- */
+  .final{display:none; flex-direction:column; gap:20px;}
+  .final.active{display:flex;}
+  .final .score-hero{
+    background:var(--ink); color:var(--bg); border-radius:var(--radius-l); padding:28px 24px;
+    display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow);
+  }
+  .final .score-hero .eyebrow{color:var(--accent-hover);}
+  .final .score-hero .big{font-family:'Sora',sans-serif; font-size:2.6rem; font-weight:800; font-variant-numeric:tabular-nums;}
+  .final .score-hero .msg{font-size:1rem; opacity:.85; max-width:56ch;}
+
+  .recap-grid{display:grid; grid-template-columns:1fr; gap:12px;}
+  .recap-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+    padding:16px 18px; box-shadow:var(--shadow); display:flex; gap:12px; align-items:flex-start;
+  }
+  .recap-card .ic{
+    flex-shrink:0; width:34px; height:34px; border-radius:50%;
+    background:var(--accent-soft); font-size:1.1rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .recap-card h4{font-size:0.95rem; font-family:'Sora',sans-serif; font-weight:700; margin-bottom:4px;}
+  .recap-card p{margin:0; font-size:0.9rem; color:var(--ink-soft);}
+  .star{color:var(--good); font-size:0.85rem; margin-left:6px; font-weight:600;}
+
+  .restart{
+    align-self:flex-start;
+    background:transparent; color:var(--ink); border:1.5px solid var(--line);
+    border-radius:999px; padding:11px 22px; font-weight:600; cursor:pointer;
+  }
+  .restart:hover{border-color:var(--accent); color:var(--accent);}
+
+  footer.credit{max-width:920px; margin:36px auto 0; padding:0 20px; color:var(--ink-faint); font-size:0.78rem;}
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="top-id">
+      <span class="eyebrow">Efficity · Suivi vendeur</span>
+      <span class="title">Baromètre de Confiance</span>
+    </div>
+    <div class="score-pill"><span class="dot"></span><span id="scoreDisplay">Score : 0/5</span></div>
+  </div>
+  <div class="barometer" id="barometer"></div>
+</header>
+
+<main class="wrap">
+
+  <section class="intro" id="intro">
+    <h1>Le prix est au-dessus du marché.<br><em>Le suivi devient votre meilleur allié.</em></h1>
+    <p class="lede">Sans visibilité sur votre travail, un vendeur comble le silence par des doutes. Ce jeu part de 20 erreurs de suivi réellement observées, regroupées en 5 familles. Pour chacune : associez la pratique à ce que ressent le vendeur, puis identifiez le réflexe à adopter pour transformer ce ressenti en confiance.</p>
+    <div class="rules">
+      <div class="rule-card"><div class="num">01</div><p>5 familles d'erreurs de suivi, une à la fois.</p></div>
+      <div class="rule-card"><div class="num">02</div><p>Associez chaque pratique à son ressenti côté client.</p></div>
+      <div class="rule-card"><div class="num">03</div><p>Choisissez la bonne pratique qui évite ce ressenti.</p></div>
+      <div class="rule-card"><div class="num">04</div><p>Repartez avec vos 5 réflexes clés en synthèse.</p></div>
+    </div>
+    <button class="cta" id="startBtn">Commencer le jeu →</button>
+  </section>
+
+  <div id="stages"></div>
+
+  <section class="final" id="final">
+    <div class="score-hero">
+      <span class="eyebrow">Résultat</span>
+      <div class="big" id="finalScore">0/5</div>
+      <div class="msg" id="finalMsg"></div>
+    </div>
+    <h2 style="font-size:1.15rem;">Vos 5 réflexes pour un suivi qui rassure</h2>
+    <div class="recap-grid" id="recapGrid"></div>
+    <button class="restart" id="restartBtn">↺ Rejouer</button>
+  </section>
+
+</main>
+
+<footer class="credit">Atelier suivi vendeur — jeu d'association et de bonnes pratiques.</footer>
+
+<script>
+(function(){
+  const rounds = [
+    {
+      icon:"⏱️",
+      title:"Régularité & réactivité du suivi",
+      framing:"Le vendeur juge votre implication à la régularité de vos nouvelles — pas seulement aux visites.",
+      critical:false,
+      pairs:[
+        {bad:"Ne donner des nouvelles que lorsqu'il y a une visite", cons:"Le vendeur pense que rien n'est fait entre-temps"},
+        {bad:"Attendre que le client relance", cons:"Sentiment d'abandon"},
+        {bad:"Disparaître après la signature du mandat", cons:"Le vendeur se sent « oublié »"},
+        {bad:"Faire un suivi irrégulier", cons:"Impression de désorganisation"},
+        {bad:"Ne pas répondre rapidement aux messages", cons:"Stress et frustration"}
+      ],
+      question:"Quelle bonne pratique adopter pour rassurer le vendeur sur ce point ?",
+      correct:"Installer un rythme de contact régulier et proactif (ex. point hebdomadaire fixe), même sans visite ni actualité, et répondre sous 24h.",
+      distractors:[
+        "Reprendre contact seulement quand une visite est programmée",
+        "Envoyer un message uniquement lorsqu'il y a une bonne nouvelle à annoncer",
+        "Laisser le vendeur relancer s'il a des questions à poser"
+      ]
+    },
+    {
+      icon:"🔍",
+      title:"Transparence & qualité des comptes-rendus",
+      framing:"Un compte-rendu vague ou trop positif coûte cher le jour où la réalité rattrape le vendeur.",
+      critical:false,
+      pairs:[
+        {bad:"Faire des comptes-rendus vagues (« la visite s'est bien passée »)", cons:"Le vendeur ne voit pas la valeur du travail"},
+        {bad:"Donner uniquement des infos positives", cons:"Le client perd confiance quand la réalité le rattrape"},
+        {bad:"Faire des comptes-rendus sans solution", cons:"Le vendeur entend seulement les problèmes"},
+        {bad:"Ne pas expliquer ce qui est fait en coulisses", cons:"Le vendeur pense que l'agent « attend juste les appels »"}
+      ],
+      question:"Quelle bonne pratique adopter pour ce point ?",
+      correct:"Faire un compte-rendu factuel et complet après chaque action — positif ET négatif — en détaillant le travail réalisé en coulisses et une piste concrète à chaque point bloquant.",
+      distractors:[
+        "Ne rapporter que les points positifs pour préserver le moral du vendeur",
+        "Envoyer un compte-rendu court type « RAS » pour ne pas le déranger",
+        "Attendre d'avoir une solution avant de signaler un problème"
+      ]
+    },
+    {
+      icon:"🤝",
+      title:"Personnalisation de la relation",
+      framing:"Un suivi copié-collé se voit — et se ressent.",
+      critical:false,
+      pairs:[
+        {bad:"Envoyer toujours les mêmes messages automatiques", cons:"Relation froide et impersonnelle"},
+        {bad:"Parler uniquement technique", cons:"Le client ne se sent pas accompagné humainement"},
+        {bad:"Multiplier les appels inutiles sans valeur ajoutée", cons:"Le client a l'impression d'être dérangé"},
+        {bad:"Ne pas adapter le suivi au profil du client", cons:"Certains veulent être rassurés, d'autres synthétiques"},
+        {bad:"Oublier les moments importants (anniversaire du mandat, étape…)", cons:"Relation impersonnelle"}
+      ],
+      question:"Quelle bonne pratique adopter pour ce point ?",
+      correct:"Adapter la forme, la fréquence et le ton du suivi au profil de CE vendeur (rassurant vs synthétique), en gardant une touche humaine — dates clés mentionnées, messages non génériques.",
+      distractors:[
+        "Utiliser le même modèle de message pour tous les vendeurs, pour gagner du temps",
+        "Multiplier les points d'étape pour montrer son implication",
+        "Rester sur les aspects techniques pour paraître crédible"
+      ]
+    },
+    {
+      icon:"🎯",
+      title:"Gestion du prix & des sujets sensibles",
+      framing:"C'est LE sujet à ne jamais éviter quand le prix est au-dessus du marché.",
+      critical:true,
+      pairs:[
+        {bad:"Ne jamais préparer le vendeur à une baisse de prix", cons:"Blocage et incompréhension plus tard"},
+        {bad:"Éviter les sujets sensibles (prix, critiques visiteurs…)", cons:"Le problème grossit"},
+        {bad:"Faire culpabiliser le vendeur sur le prix", cons:"Dégradation de la relation"}
+      ],
+      question:"Quelle bonne pratique adopter pour ce point ?",
+      correct:"Aborder les sujets sensibles tôt et avec pédagogie : préparer le vendeur dès la prise de mandat à l'hypothèse d'un ajustement de prix, sans jamais le culpabiliser.",
+      distractors:[
+        "Éviter le sujet du prix tant que le vendeur n'en parle pas",
+        "Annoncer une baisse de prix nécessaire sans l'avoir anticipée avec le vendeur",
+        "Rappeler régulièrement au vendeur que son prix est trop élevé"
+      ]
+    },
+    {
+      icon:"🎧",
+      title:"Posture, engagements & écoute",
+      framing:"Tenir parole et écouter le ressenti désamorcent la plupart des tensions.",
+      critical:false,
+      pairs:[
+        {bad:"Promettre un suivi « premium » puis ne pas le tenir", cons:"Forte déception"},
+        {bad:"Être trop insistant ou anxiogène", cons:"Le vendeur se ferme"},
+        {bad:"Ne jamais demander le ressenti du vendeur", cons:"Le client accumule des frustrations silencieuses"}
+      ],
+      question:"Quelle bonne pratique adopter pour ce point ?",
+      correct:"Tenir les engagements de suivi annoncés, garder une posture rassurante — ni absente, ni pressante — et demander régulièrement le ressenti du vendeur pour désamorcer les frustrations avant qu'elles ne s'accumulent.",
+      distractors:[
+        "Promettre un accompagnement premium pour rassurer à la signature, quitte à l'ajuster ensuite",
+        "Relancer très fréquemment le vendeur pour montrer son investissement",
+        "Éviter de demander le ressenti du vendeur pour ne pas raviver ses inquiétudes"
+      ]
+    }
+  ];
+
+  let current = 0;
+  let score = 0;
+  const perRoundState = rounds.map(()=>({ matchedCount:0, mistakes:0, answered:false, correct:false }));
+
+  const stagesEl = document.getElementById('stages');
+  const barometerEl = document.getElementById('barometer');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  // Build barometer segments
+  rounds.forEach((r,i)=>{
+    const seg = document.createElement('div');
+    seg.className = 'baro-seg';
+    seg.id = 'baro-'+i;
+    seg.innerHTML = '<div class="bar"><i></i></div><span class="lbl">'+r.icon+'</span>';
+    barometerEl.appendChild(seg);
+  });
+
+  function refreshBarometer(){
+    rounds.forEach((r,i)=>{
+      const seg = document.getElementById('baro-'+i);
+      seg.classList.remove('current','done');
+      if(i < current) seg.classList.add('done');
+      else if(i === current) seg.classList.add(perRoundState[i].answered ? 'done' : 'current');
+    });
+  }
+
+  function buildStage(round, idx){
+    const stage = document.createElement('section');
+    stage.className = 'stage';
+    stage.id = 'stage-'+idx;
+
+    const leftOrder = round.pairs.map((p,i)=>i);
+    const rightOrder = shuffle(round.pairs.map((p,i)=>i));
+
+    stage.innerHTML = `
+      <div class="round-head">
+        <div class="round-icon">${round.icon}</div>
+        <div>
+          <div class="rn">Round ${idx+1} / ${rounds.length}</div>
+          <h2>${round.title}</h2>
+          <div class="framing">${round.framing}</div>
+          ${round.critical ? '<span class="badge-critical">Cas critique · prix au-dessus du marché</span>' : ''}
+        </div>
+      </div>
+
+      <div>
+        <div class="phase-label"><span class="n">1</span> Associez la pratique à son ressenti <span class="match-progress" id="mp-${idx}">0/${round.pairs.length}</span></div>
+        <div class="match-grid" style="margin-top:10px;">
+          <div class="match-col">
+            <h3>Mauvaise pratique</h3>
+            <div id="left-${idx}"></div>
+          </div>
+          <div class="match-col">
+            <h3>Ressenti du client</h3>
+            <div id="right-${idx}"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qcm" id="qcm-${idx}">
+        <div class="phase-label"><span class="n">2</span> La bonne pratique</div>
+        <h3>${round.question}</h3>
+        <div id="opts-${idx}"></div>
+        <div class="feedback" id="fb-${idx}"></div>
+        <button class="next-btn" id="next-${idx}">${idx === rounds.length-1 ? 'Voir la synthèse →' : 'Round suivant →'}</button>
+      </div>
+    `;
+    stagesEl.appendChild(stage);
+
+    const leftCol = stage.querySelector('#left-'+idx);
+    const rightCol = stage.querySelector('#right-'+idx);
+
+    leftOrder.forEach(pi=>{
+      const b = document.createElement('button');
+      b.className = 'card-btn';
+      b.textContent = round.pairs[pi].bad;
+      b.dataset.pair = pi;
+      b.dataset.side = 'left';
+      leftCol.appendChild(b);
+    });
+    rightOrder.forEach(pi=>{
+      const b = document.createElement('button');
+      b.className = 'card-btn';
+      b.textContent = round.pairs[pi].cons;
+      b.dataset.pair = pi;
+      b.dataset.side = 'right';
+      rightCol.appendChild(b);
+    });
+
+    let selectedLeft = null, selectedRight = null;
+
+    function tryMatch(){
+      if(selectedLeft === null || selectedRight === null) return;
+      const li = selectedLeft, ri = selectedRight;
+      const lBtn = leftCol.querySelector(`[data-side="left"][data-pair="${li.dataset.pair}"]`);
+      const rBtn = selectedRight;
+      if(li.dataset.pair === ri.dataset.pair){
+        li.classList.remove('selected'); li.classList.add('matched'); li.disabled = true;
+        ri.classList.remove('selected'); ri.classList.add('matched'); ri.disabled = true;
+        perRoundState[idx].matchedCount++;
+        stage.querySelector('#mp-'+idx).textContent = perRoundState[idx].matchedCount + '/' + round.pairs.length;
+        if(perRoundState[idx].matchedCount === round.pairs.length){
+          stage.querySelector('#qcm-'+idx).classList.add('unlocked');
+        }
+      } else {
+        perRoundState[idx].mistakes++;
+        li.classList.add('wrong'); ri.classList.add('wrong');
+        setTimeout(()=>{
+          li.classList.remove('wrong','selected');
+          ri.classList.remove('wrong','selected');
+        }, 500);
+      }
+      selectedLeft = null; selectedRight = null;
+    }
+
+    leftCol.addEventListener('click', e=>{
+      const btn = e.target.closest('.card-btn');
+      if(!btn || btn.disabled) return;
+      if(selectedLeft) selectedLeft.classList.remove('selected');
+      selectedLeft = btn;
+      btn.classList.add('selected');
+      tryMatch();
+    });
+    rightCol.addEventListener('click', e=>{
+      const btn = e.target.closest('.card-btn');
+      if(!btn || btn.disabled) return;
+      if(selectedRight) selectedRight.classList.remove('selected');
+      selectedRight = btn;
+      btn.classList.add('selected');
+      tryMatch();
+    });
+
+    // QCM
+    const options = shuffle([round.correct, ...round.distractors]);
+    const optsEl = stage.querySelector('#opts-'+idx);
+    options.forEach(optText=>{
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = optText;
+      b.addEventListener('click', ()=>{
+        if(perRoundState[idx].answered) return;
+        perRoundState[idx].answered = true;
+        const isCorrect = optText === round.correct;
+        perRoundState[idx].correct = isCorrect;
+        if(isCorrect) score++;
+        scoreDisplay.textContent = 'Score : ' + score + '/' + rounds.length;
+        optsEl.querySelectorAll('.opt').forEach(o=>{
+          o.disabled = true;
+          if(o.textContent === round.correct) o.classList.add('correct');
+          else if(o === b) o.classList.add('incorrect');
+        });
+        const fb = stage.querySelector('#fb-'+idx);
+        fb.classList.add('show', isCorrect ? 'good' : 'bad');
+        fb.textContent = isCorrect
+          ? '✓ Exactement — ' + round.correct
+          : '✗ Pas tout à fait. Le bon réflexe : ' + round.correct;
+        stage.querySelector('#next-'+idx).classList.add('show');
+        refreshBarometer();
+      });
+      optsEl.appendChild(b);
+    });
+
+    stage.querySelector('#next-'+idx).addEventListener('click', ()=>{
+      if(idx === rounds.length-1){
+        showFinal();
+      } else {
+        goTo(idx+1);
+      }
+    });
+  }
+
+  rounds.forEach((r,i)=>buildStage(r,i));
+
+  function goTo(idx){
+    document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));
+    current = idx;
+    document.getElementById('stage-'+idx).classList.add('active');
+    refreshBarometer();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function showFinal(){
+    document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));
+    refreshBarometer();
+    document.getElementById('final').classList.add('active');
+    document.getElementById('finalScore').textContent = score + '/' + rounds.length;
+    const msgEl = document.getElementById('finalMsg');
+    let msg;
+    if(score === rounds.length) msg = "Sans-faute. Vos vendeurs ressentent un accompagnement clair, honnête et sur-mesure — un vrai levier quand le prix dépasse le marché.";
+    else if(score >= rounds.length - 1) msg = "Très solide. Un seul réflexe à retravailler pour verrouiller la confiance sur toute la durée du mandat.";
+    else if(score >= rounds.length/2) msg = "Bonne base. Quelques réflexes à ancrer pour éviter que le silence ou l'approximation ne s'installent.";
+    else msg = "Le suivi mérite d'être retravaillé — reprenez la synthèse ci-dessous et rejouez pour ancrer les réflexes.";
+    msgEl.textContent = msg;
+
+    const grid = document.getElementById('recapGrid');
+    grid.innerHTML = '';
+    rounds.forEach((r,i)=>{
+      const card = document.createElement('div');
+      card.className = 'recap-card';
+      const perfect = perRoundState[i].mistakes === 0;
+      card.innerHTML = `
+        <div class="ic">${r.icon}</div>
+        <div>
+          <h4>${r.title}${perfect ? '<span class="star">★ association parfaite</span>' : ''}</h4>
+          <p>${r.correct}</p>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    document.getElementById('intro').style.display = 'none';
+    goTo(0);
+  });
+
+  document.getElementById('restartBtn').addEventListener('click', ()=>{
+    score = 0;
+    scoreDisplay.textContent = 'Score : 0/5';
+    perRoundState.forEach(s=>{ s.matchedCount=0; s.mistakes=0; s.answered=false; s.correct=false; });
+    stagesEl.innerHTML = '';
+    rounds.forEach((r,i)=>buildStage(r,i));
+    document.getElementById('final').classList.remove('active');
+    document.getElementById('intro').style.display = 'flex';
+    current = 0;
+    refreshBarometer();
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  refreshBarometer();
+})();
+</script>
